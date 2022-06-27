@@ -97,10 +97,3 @@ createUsernames(accounts);
 console.log(accounts);
 
 calcDisplayBalance(account1.movements);
-
-//
-const max = account1.movements.reduce((acc, mov) => {
-  if (acc > mov) return acc;
-  else return mov;
-}, account1.movements[0]);
-console.log(max);
