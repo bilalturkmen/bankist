@@ -63,39 +63,51 @@ const inputClosePin = document.querySelector('.form__input--pin');
 
 //////
 
+// Hesap hareketlerini listelediğimiz fonksiyon
 const displayMovements = function (movements) {
+  // html içindeki değerleri temizliyoruz
   containerMovements.innerHTML = '';
+  // foreach döngüsü ile hareketlerini listeliyoruz
   movements.forEach(function (mov, i) {
+    // hareketin türüne göre text yazdırıyoruz
     const type = mov > 0 ? 'deposit' : 'withdrawal';
 
+    // döngüde her satıra eklenecek html değerleri tanımlıyoruz
     const html = `
 <div class="movements__row">
 <div class="movements__type movements__type--${type}"> ${i + 1} ${type} </div>
 <div class="movements__value"> ${mov}€</div>
 </div>`;
+    // html değerleri ilgili query alınan gönderiyoruz
     containerMovements.insertAdjacentHTML('afterbegin', html);
   });
 };
 
+// Hesapta bulunan miktarı listelemek için fonksiyonu kullanıyoruz
 const calcDisplayBalance = function (acc) {
+  // balance hesaplamasını yapıyoruz
   acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
-
+  // balance değerini tanımlandığımız label alanına yazdırıyoruz
   labelBalance.textContent = `${acc.balance} €`;
 };
 
+// Hesap özetlerini listeleyen fonksiyon
 const calcDisplaySummary = function (acc) {
+  // Hesaba gelen miktarı hesaplıyoruz
   const incomes = acc.movements
     .filter(mov => mov > 0)
     .reduce((acc, mov) => acc + mov, 0);
 
   labelSumIn.textContent = ` ${incomes}€ `;
 
+  // Hesaptan çıkan miktarı hesaplıyoruz
   const outgoing = acc.movements
     .filter(mov => mov < 0)
     .reduce((acc, mov) => acc + mov, 0);
 
   labelSumOut.textContent = ` ${Math.abs(outgoing)}€ `;
 
+  // Hesaba tanımlanan faizi hesaplıyoruz.
   const interest = acc.movements
     .filter(mov => mov > 0)
     .map(deposit => (deposit * acc.interestRate) / 100)
@@ -107,6 +119,7 @@ const calcDisplaySummary = function (acc) {
   labelSumInterest.textContent = ` ${interest}€ `;
 };
 
+// Kullanıcı adı oluşturan fonksiyon
 const createUsernames = function (accs) {
   accs.forEach(function (acc) {
     acc.username = acc.owner
@@ -118,6 +131,7 @@ const createUsernames = function (accs) {
 };
 createUsernames(accounts);
 
+// hesap arayüzünü günceleyen fonksiyon
 const updateUI = function (acc) {
   // Display Movements
   displayMovements(acc.movements);
@@ -151,25 +165,39 @@ btnLogin.addEventListener('click', function (e) {
   }
 });
 
+/// Para transferi için event fonksiyonu tanımlıyoruz
 btnTransfer.addEventListener('click', function (e) {
   e.preventDefault();
+
+  // Girilen değer için değişken tanımlıyoruz
   const amount = Number(inputTransferAmount.value);
+
+  // Alıcı hesap için değişken tanımlıyoruz
   const receiverAcc = accounts.find(
+    // alıcının kullanıcı adını kontrol ediyoruz
     acc => acc.username === inputTransferTo.value
   );
 
+  // işlem sonrası input alanlarındaki yazıları temizliyoruz
   inputTransferAmount.value = inputTransferTo.value = '';
 
   if (
+    // miktar sıfırdan büyük olmalı
     amount > 0 &&
+    // kullanıcı adı gerçek olmalı
     receiverAcc &&
+    // mevcut hesap bakiyesi yeterli olmalı
     currenAccount.balance >= amount &&
-    receiverAcc?.username !== currenAccount.username
+    // alıcı hesap adı gönderen hesaptan farklı olmalı
+    receiverAcc.username !== currenAccount.username
   ) {
-    // doing the transfer
+    // gönderen hesaptan girilen miktar düşüyoruz
     currenAccount.movements.push(-amount);
+
+    // alıcı hesaba girilen miktarı push ediyoruz
     receiverAcc.movements.push(amount);
-    // Update UI
+
+    // İşlemin arayüzde görünür olmasını sağlayan fonksiyonu çalıştırıyoruz.
     updateUI(currenAccount);
   }
 });
