@@ -64,11 +64,14 @@ const inputClosePin = document.querySelector('.form__input--pin');
 //////
 
 // Hesap hareketlerini listelediğimiz fonksiyon
-const displayMovements = function (movements) {
+const displayMovements = function (movements, sort = false) {
   // html içindeki değerleri temizliyoruz
   containerMovements.innerHTML = '';
+
+  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+
   // foreach döngüsü ile hareketlerini listeliyoruz
-  movements.forEach(function (mov, i) {
+  movs.forEach(function (mov, i) {
     // hareketin türüne göre text yazdırıyoruz
     const type = mov > 0 ? 'deposit' : 'withdrawal';
 
@@ -221,6 +224,26 @@ btnTransfer.addEventListener('click', function (e) {
   }
 });
 
+// kredi talebi alanı için eventi tanımlıyoruz
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+  // talep edilen miktar için değişkenimizi tanımlıyoruz.
+  const amount = Number(inputLoanAmount.value);
+  // İlgili koşulları tanımlıyoruz.
+  // some metoduyla talep edilen miktar, mevcut hesaptaki en büyük miktarın maksimum 10 katı kadar olabilir
+  if (amount > 0 && currenAccount.movements.some(mov => mov >= amount / 10)) {
+    // Add movement
+    currenAccount.movements.push(amount);
+    // update UI
+    updateUI(currenAccount);
+  } else {
+    alert(
+      'bu miktar için hesabınız müsait değil. lütfen daha küçük bir miktar deneyin'
+    );
+  }
+  inputLoanAmount.value = '';
+});
+
 // Hesabı silme eventi
 btnClose.addEventListener('click', function (e) {
   e.preventDefault();
@@ -244,4 +267,11 @@ btnClose.addEventListener('click', function (e) {
   inputCloseUsername.value = inputClosePin.value = '';
   // İşlem sonrası wellcome mesajını güncelliyoruz
   labelWelcome.textContent = 'Log in to get started';
+});
+
+let sorted = false;
+btnSort.addEventListener('click', function (e) {
+  e.preventDefault();
+  displayMovements(currenAccount.movements, !sorted);
+  sorted = !sorted;
 });
