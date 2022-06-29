@@ -93,18 +93,22 @@ const calcDisplayBalance = function (acc) {
 
 // Hesap özetlerini listeleyen fonksiyon
 const calcDisplaySummary = function (acc) {
-  // Hesaba gelen miktarı hesaplıyoruz
+  // Hesaba gelen miktarları hesaplıyoruz
   const incomes = acc.movements
+    // önce sıfırdan büyük olan miktarları filtreliyoruz
     .filter(mov => mov > 0)
+    // filtrelenen miktarların toplamını buluyoruz
     .reduce((acc, mov) => acc + mov, 0);
-
+  // toplam miktarı ilgili label alanına yazdırıyoruz
   labelSumIn.textContent = ` ${incomes}€ `;
 
   // Hesaptan çıkan miktarı hesaplıyoruz
   const outgoing = acc.movements
+    /// sıfırdan küçük olan miktarları filtreliyoruz
     .filter(mov => mov < 0)
+    // filtrelenen miktarları toplamını buluyoruz.
     .reduce((acc, mov) => acc + mov, 0);
-
+  // bulunan miktarı ilgili label alanına yazdırıyoruz
   labelSumOut.textContent = ` ${Math.abs(outgoing)}€ `;
 
   // Hesaba tanımlanan faizi hesaplıyoruz.
@@ -121,47 +125,62 @@ const calcDisplaySummary = function (acc) {
 
 // Kullanıcı adı oluşturan fonksiyon
 const createUsernames = function (accs) {
+  // array ile gelen hesap bilgilerini foreach ile dönüyoruz
   accs.forEach(function (acc) {
     acc.username = acc.owner
+      // owner verisini tüm harfleri küçültme işlemi
       .toLowerCase()
+      // boşluklardan ayırıyoruz
       .split(' ')
+      // map ile ayrılan objelerin birinci elementlerini seçiyoruz
       .map(name => name[0])
+      // join ile seçilen elemenleri birleştiriyoruz
       .join('');
   });
 };
+// fonksiyona ilgili array dizisini gönderiyoruz
 createUsernames(accounts);
 
 // hesap arayüzünü günceleyen fonksiyon
 const updateUI = function (acc) {
-  // Display Movements
+  // Hesap hareketleri fonksiyonuna giriş yapan hesabın array dizisini gönderiyoruz
   displayMovements(acc.movements);
 
-  // Display Balance
+  // Hesap toplam miktarı gösteren fonksiyona giriş yapan hesap bilgisini gönderiyoruz
   calcDisplayBalance(acc);
 
-  // Display Summary
+  // Hesap özetleri fonksiyonuna giriş yapan hesap bilgisini gönderiyoruz
   calcDisplaySummary(acc);
 };
 
+// Giriş yapan hesap değişkeni
 let currenAccount;
 
+// Hesap giriş eventi
 btnLogin.addEventListener('click', function (e) {
   e.preventDefault();
+
+  // giriş yapan username ve pin kodunu kontrol ediyoruz
   currenAccount = accounts.find(
     acc => acc.username === inputLoginUsername.value
   );
   if (currenAccount?.pin === Number(inputLoginPin.value)) {
-    // Display UI and wellcome message
+    // sonuç true wellcome mesajı ve hesabın adı yazdırılıyor
     labelWelcome.textContent = `Wellcome back, ${
       currenAccount.owner.split(' ')[0]
     }`;
+    // Arayüz opasitesi değiştirilerek görünür oluyor
     containerApp.style.opacity = 100;
 
     // Clear input fields
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
 
+    // update ui fonksiyonunu giriş yapan hesap bilgisi gönderiliyor
     updateUI(currenAccount);
+  } else {
+    // şifre veya kullanıcı adı hatalı ise
+    alert('Wrong Password or Username');
   }
 });
 
@@ -200,4 +219,29 @@ btnTransfer.addEventListener('click', function (e) {
     // İşlemin arayüzde görünür olmasını sağlayan fonksiyonu çalıştırıyoruz.
     updateUI(currenAccount);
   }
+});
+
+// Hesabı silme eventi
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+  // input alanınan girilen verileri mevcut değerler ile karşılaştırıyoruz
+  if (
+    inputCloseUsername.value === currenAccount.username &&
+    Number(inputClosePin.value) === currenAccount.pin
+  ) {
+    //input alanına girilen bilgileri findindex metoduyla kullanıcı hesabı ile eşleştiriyoruz
+    const index = accounts.findIndex(
+      acc => acc.username === currenAccount.username
+    );
+
+    // Splice methoduyla hesabı siliyoruz
+    accounts.splice(index, 1);
+
+    // İşlem sonrasında arayüzü gizliyoruz.
+    containerApp.style.opacity = 0;
+  }
+  // işlem sonrası input alanlarındaki yazıları temizliyoruz
+  inputCloseUsername.value = inputClosePin.value = '';
+  // İşlem sonrası wellcome mesajını güncelliyoruz
+  labelWelcome.textContent = 'Log in to get started';
 });
