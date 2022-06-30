@@ -68,6 +68,7 @@ const displayMovements = function (movements, sort = false) {
   // html içindeki değerleri temizliyoruz
   containerMovements.innerHTML = '';
 
+  // ascending sıralama için sort metodunu kullanıyoruz
   const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
 
   // foreach döngüsü ile hareketlerini listeliyoruz
@@ -269,9 +270,75 @@ btnClose.addEventListener('click', function (e) {
   labelWelcome.textContent = 'Log in to get started';
 });
 
+// Hesap hareketlerini sıralama değişkeni
 let sorted = false;
+
+// Hesap hareketlerini sıralama eventi
 btnSort.addEventListener('click', function (e) {
   e.preventDefault();
+  // Sort butonu tıklandığında true olarak parametre gönderiyoruz
   displayMovements(currenAccount.movements, !sorted);
+  // Butona tekrar tıklandığında tekrar false değeri almasını sağlıyoruz
   sorted = !sorted;
 });
+
+///////////////// ARRAY LECTURE
+
+//// 1.
+// Tüm hesapların toplamını veren değişkeni tanımlıyoruz
+const bankDepositSum = accounts
+  // flat map ile map ve flat methodlarını bir arada kullanabiliyoruz
+  .flatMap(acc => acc.movements)
+  // filter metodu ile sadece sıfırdan büyük rakamları getiriyoruz
+  .filter(mov => mov > 0)
+  // reduce metodu ile rakamları birbirleri ile toplamını buluyoruz
+  .reduce((sum, cur) => sum + cur, 0);
+console.log(bankDepositSum);
+
+//// 2.
+const numDeposits1000 = accounts
+  .flatMap(acc => acc.movements)
+  .reduce((count, cur) => (cur >= 1000 ? count + 1 : count), 0);
+console.log(numDeposits1000);
+
+//// 3.
+const sums = accounts
+  .flatMap(acc => acc.movements)
+  .reduce(
+    (sums, cur) => {
+      cur > 0 ? (sums.deposits += cur) : (sums.withdrawals += cur);
+      return sums;
+    },
+    { deposits: 0, withdrawals: 0 }
+  );
+console.log(sums);
+
+/// object destructuring yaparsak
+const { deposits, withdrawals } = accounts
+  .flatMap(acc => acc.movements)
+  .reduce(
+    (sums, cur) => {
+      // cur > 0 ? (sums.deposits += cur) : (sums.withdrawals += cur);
+      sums[cur > 0 ? 'deposits' : 'withdrawals'] += cur;
+      return sums;
+    },
+    { deposits: 0, withdrawals: 0 }
+  );
+console.log(deposits, withdrawals);
+
+//// 4.
+const convertTitleCase = function (title) {
+  const capitalize = str => str[0].toUpperCase() + str.slice(1);
+
+  const exceptions = ['a', 'an', 'the', 'but', 'or', 'on', 'in', 'with'];
+
+  const titleCase = title
+    .toLowerCase()
+    .split(' ')
+    .map(word => (exceptions.includes(word) ? word : capitalize(word)))
+    .join(' ');
+  return capitalize(titleCase);
+};
+console.log(convertTitleCase('this is a nice title'));
+console.log(convertTitleCase('this is a LONG title but not too long'));
+console.log(convertTitleCase('and here is another title with an EXAMPLE'));
