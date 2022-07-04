@@ -180,6 +180,10 @@ btnLogin.addEventListener('click', function (e) {
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
 
+    // Ansayfadaki kullanıcı adı bilgilerini gizliyoruz.
+    const hideUnames = document.querySelector('.uname');
+    hideUnames.style.display = 'none';
+
     // update ui fonksiyonunu giriş yapan hesap bilgisi gönderiliyor
     updateUI(currenAccount);
   } else {
