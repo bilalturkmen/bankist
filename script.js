@@ -10,6 +10,18 @@ const account1 = {
   movements: [200, 450, -400, 3000, -650, -130, 70, 1300],
   interestRate: 1.2, // %
   pin: 1111,
+  movementsDates: [
+    '2019-11-18T21:31:17.178Z',
+    '2019-12-23T07:42:02.383Z',
+    '2020-01-28T09:15:04.904Z',
+    '2020-04-01T10:17:24.185Z',
+    '2020-05-08T14:11:59.604Z',
+    '2020-05-27T17:01:17.194Z',
+    '2022-07-01T23:36:17.929Z',
+    '2022-07-03T10:51:36.790Z',
+  ],
+  currency: 'EUR',
+  locale: 'pt-PT', // de-DE
 };
 
 const account2 = {
@@ -17,6 +29,18 @@ const account2 = {
   movements: [5000, 3400, -150, -790, -3210, -1000, 8500, -30],
   interestRate: 1.5,
   pin: 2222,
+  movementsDates: [
+    '2019-11-01T13:15:33.035Z',
+    '2019-11-30T09:48:16.867Z',
+    '2019-12-25T06:04:23.907Z',
+    '2020-01-25T14:18:46.235Z',
+    '2020-02-05T16:33:06.386Z',
+    '2020-04-10T14:43:26.374Z',
+    '2020-06-25T18:49:59.371Z',
+    '2020-07-26T12:01:20.894Z',
+  ],
+  currency: 'USD',
+  locale: 'en-US',
 };
 
 const account3 = {
@@ -63,24 +87,57 @@ const inputClosePin = document.querySelector('.form__input--pin');
 
 //////
 
+const formatMovementsDates = function (date, locale) {
+  const calcDisplayDate = (date1, date2) =>
+    Math.round(Math.abs(date2 - date1) / (1000 * 60 * 60 * 24));
+
+  const daysPassed = calcDisplayDate(new Date(), date);
+
+  if (daysPassed === 0) return 'Today';
+  if (daysPassed === 1) return 'Yesterday';
+  if (daysPassed <= 7) return `${daysPassed} days ago`;
+  else {
+    // const day = `${date.getDate()}`.padStart(2, 0);
+    // const month = `${date.getMonth() + 1}`.padStart(2, 0);
+    // const year = date.getFullYear();
+    // return `${day}/${month}/${year}`;
+
+    return new Intl.DateTimeFormat(locale).format(date);
+  }
+};
+
+const formatCur = function (value, locale, currency) {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currency,
+  }).format(value);
+};
+
 // Hesap hareketlerini listelediğimiz fonksiyon
-const displayMovements = function (movements, sort = false) {
+const displayMovements = function (acc, sort = false) {
   // html içindeki değerleri temizliyoruz
   containerMovements.innerHTML = '';
 
   // ascending sıralama için sort metodunu kullanıyoruz
-  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+  const movs = sort
+    ? acc.movements.slice().sort((a, b) => a - b)
+    : acc.movements;
 
   // foreach döngüsü ile hareketlerini listeliyoruz
   movs.forEach(function (mov, i) {
     // hareketin türüne göre text yazdırıyoruz
     const type = mov > 0 ? 'deposit' : 'withdrawal';
 
+    const date = new Date(acc.movementsDates[i]);
+    const displayDate = formatMovementsDates(date, acc.locale);
+    const formattedMov = formatCur(mov, acc.locale, acc.currency);
+
     // döngüde her satıra eklenecek html değerleri tanımlıyoruz
     const html = `
 <div class="movements__row">
 <div class="movements__type movements__type--${type}"> ${i + 1} ${type} </div>
-<div class="movements__value"> ${mov}€</div>
+<div class="movements__date">${displayDate}</div>
+<div class="movements__value">  ${formattedMov} </div>
 </div>`;
     // html değerleri ilgili query alınan gönderiyoruz
     containerMovements.insertAdjacentHTML('afterbegin', html);
@@ -91,8 +148,9 @@ const displayMovements = function (movements, sort = false) {
 const calcDisplayBalance = function (acc) {
   // balance hesaplamasını yapıyoruz
   acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
+
   // balance değerini tanımlandığımız label alanına yazdırıyoruz
-  labelBalance.textContent = `${acc.balance} €`;
+  labelBalance.textContent = formatCur(acc.balance, acc.locale, acc.currency);
 };
 
 // Hesap özetlerini listeleyen fonksiyon
@@ -104,7 +162,7 @@ const calcDisplaySummary = function (acc) {
     // filtrelenen miktarların toplamını buluyoruz
     .reduce((acc, mov) => acc + mov, 0);
   // toplam miktarı ilgili label alanına yazdırıyoruz
-  labelSumIn.textContent = ` ${incomes}€ `;
+  labelSumIn.textContent = formatCur(incomes, acc.locale, acc.currency);
 
   // Hesaptan çıkan miktarı hesaplıyoruz
   const outgoing = acc.movements
@@ -113,7 +171,11 @@ const calcDisplaySummary = function (acc) {
     // filtrelenen miktarları toplamını buluyoruz.
     .reduce((acc, mov) => acc + mov, 0);
   // bulunan miktarı ilgili label alanına yazdırıyoruz
-  labelSumOut.textContent = ` ${Math.abs(outgoing)}€ `;
+  labelSumOut.textContent = formatCur(
+    Math.abs(outgoing),
+    acc.locale,
+    acc.currency
+  );
 
   // Hesaba tanımlanan faizi hesaplıyoruz.
   const interest = acc.movements
@@ -123,8 +185,8 @@ const calcDisplaySummary = function (acc) {
       return int >= 1;
     })
     .reduce((acc, int) => acc + int, 0);
-
-  labelSumInterest.textContent = ` ${interest}€ `;
+  // tofixed metodu ile kaç küsürat basamağı göstereceğini belirtiyoruz.
+  labelSumInterest.textContent = formatCur(interest, acc.locale, acc.currency);
 };
 
 // Kullanıcı adı oluşturan fonksiyon
@@ -148,7 +210,7 @@ createUsernames(accounts);
 // hesap arayüzünü günceleyen fonksiyon
 const updateUI = function (acc) {
   // Hesap hareketleri fonksiyonuna giriş yapan hesabın array dizisini gönderiyoruz
-  displayMovements(acc.movements);
+  displayMovements(acc);
 
   // Hesap toplam miktarı gösteren fonksiyona giriş yapan hesap bilgisini gönderiyoruz
   calcDisplayBalance(acc);
@@ -159,6 +221,10 @@ const updateUI = function (acc) {
 
 // Giriş yapan hesap değişkeni
 let currenAccount;
+
+currenAccount = account1;
+updateUI(currenAccount);
+containerApp.style.opacity = 100;
 
 // Hesap giriş eventi
 btnLogin.addEventListener('click', function (e) {
@@ -175,6 +241,22 @@ btnLogin.addEventListener('click', function (e) {
     }`;
     // Arayüz opasitesi değiştirilerek görünür oluyor
     containerApp.style.opacity = 100;
+
+    // Bugünün tarihini ekrana yazdırıyoruz
+    const now = new Date();
+    const options = {
+      hour: 'numeric',
+      minute: 'numeric',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      // weekday: 'long',
+    };
+
+    labelDate.textContent = new Intl.DateTimeFormat(
+      currenAccount.locale,
+      options
+    ).format(now);
 
     // Clear input fields
     inputLoginUsername.value = inputLoginPin.value = '';
@@ -224,6 +306,10 @@ btnTransfer.addEventListener('click', function (e) {
     // alıcı hesaba girilen miktarı push ediyoruz
     receiverAcc.movements.push(amount);
 
+    // Para transafer tarihini getiriyoruz.
+    currenAccount.movementsDates.push(new Date().toISOString());
+    receiverAcc.movementsDates.push(new Date().toISOString());
+
     // İşlemin arayüzde görünür olmasını sağlayan fonksiyonu çalıştırıyoruz.
     updateUI(currenAccount);
   }
@@ -233,12 +319,16 @@ btnTransfer.addEventListener('click', function (e) {
 btnLoan.addEventListener('click', function (e) {
   e.preventDefault();
   // talep edilen miktar için değişkenimizi tanımlıyoruz.
-  const amount = Number(inputLoanAmount.value);
+  const amount = Math.floor(inputLoanAmount.value);
   // İlgili koşulları tanımlıyoruz.
   // some metoduyla talep edilen miktar, mevcut hesaptaki en büyük miktarın maksimum 10 katı kadar olabilir
   if (amount > 0 && currenAccount.movements.some(mov => mov >= amount / 10)) {
     // Add movement
     currenAccount.movements.push(amount);
+
+    // Kredi talebi tarihini getiriyoruz.
+    currenAccount.movementsDates.push(new Date().toISOString());
+
     // update UI
     updateUI(currenAccount);
   } else {
@@ -281,68 +371,7 @@ let sorted = false;
 btnSort.addEventListener('click', function (e) {
   e.preventDefault();
   // Sort butonu tıklandığında true olarak parametre gönderiyoruz
-  displayMovements(currenAccount.movements, !sorted);
+  displayMovements(currenAccount, !sorted);
   // Butona tekrar tıklandığında tekrar false değeri almasını sağlıyoruz
   sorted = !sorted;
 });
-
-///////////////// ARRAY LECTURE
-
-//// 1.
-// Tüm hesapların toplamını veren değişkeni tanımlıyoruz
-const bankDepositSum = accounts
-  // flat map ile map ve flat methodlarını bir arada kullanabiliyoruz
-  .flatMap(acc => acc.movements)
-  // filter metodu ile sadece sıfırdan büyük rakamları getiriyoruz
-  .filter(mov => mov > 0)
-  // reduce metodu ile rakamları birbirleri ile toplamını buluyoruz
-  .reduce((sum, cur) => sum + cur, 0);
-console.log(bankDepositSum);
-
-//// 2.
-const numDeposits1000 = accounts
-  .flatMap(acc => acc.movements)
-  .reduce((count, cur) => (cur >= 1000 ? count + 1 : count), 0);
-console.log(numDeposits1000);
-
-//// 3.
-const sums = accounts
-  .flatMap(acc => acc.movements)
-  .reduce(
-    (sums, cur) => {
-      cur > 0 ? (sums.deposits += cur) : (sums.withdrawals += cur);
-      return sums;
-    },
-    { deposits: 0, withdrawals: 0 }
-  );
-console.log(sums);
-
-/// object destructuring yaparsak
-const { deposits, withdrawals } = accounts
-  .flatMap(acc => acc.movements)
-  .reduce(
-    (sums, cur) => {
-      // cur > 0 ? (sums.deposits += cur) : (sums.withdrawals += cur);
-      sums[cur > 0 ? 'deposits' : 'withdrawals'] += cur;
-      return sums;
-    },
-    { deposits: 0, withdrawals: 0 }
-  );
-console.log(deposits, withdrawals);
-
-//// 4.
-const convertTitleCase = function (title) {
-  const capitalize = str => str[0].toUpperCase() + str.slice(1);
-
-  const exceptions = ['a', 'an', 'the', 'but', 'or', 'on', 'in', 'with'];
-
-  const titleCase = title
-    .toLowerCase()
-    .split(' ')
-    .map(word => (exceptions.includes(word) ? word : capitalize(word)))
-    .join(' ');
-  return capitalize(titleCase);
-};
-console.log(convertTitleCase('this is a nice title'));
-console.log(convertTitleCase('this is a LONG title but not too long'));
-console.log(convertTitleCase('and here is another title with an EXAMPLE'));
