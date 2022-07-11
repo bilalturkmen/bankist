@@ -21,7 +21,7 @@ const account1 = {
     '2022-07-03T10:51:36.790Z',
   ],
   currency: 'EUR',
-  locale: 'pt-PT', // de-DE
+  locale: 'de-DE',
 };
 
 const account2 = {
@@ -219,12 +219,40 @@ const updateUI = function (acc) {
   calcDisplaySummary(acc);
 };
 
-// Giriş yapan hesap değişkeni
-let currenAccount;
+const startLogOutTimer = function () {
+  const tick = function () {
+    const min = String(Math.trunc(time / 60)).padStart(2, 0);
+    const sec = String(time % 60).padStart(2, 0);
 
-currenAccount = account1;
-updateUI(currenAccount);
-containerApp.style.opacity = 100;
+    //in each call print the remaining
+    labelTimer.textContent = `${min}:${sec} `;
+
+    //whe 0 stop timer and logout
+    if (time === 0) {
+      clearInterval(timer);
+      labelWelcome.textContent = 'Login to get started';
+      // Arayüz opasitesi değiştirilerek görünür oluyor
+      containerApp.style.opacity = 0;
+    }
+    // decrese 1s
+    time--;
+  };
+
+  // set time to 5 minutes
+  let time = 120;
+
+  // call the timer every second
+  tick();
+  const timer = setInterval(tick, 1000);
+  return timer;
+};
+
+// Giriş yapan hesap ve zaman sayacı değişkeni
+let currenAccount, timer;
+
+// currenAccount = account1;
+// updateUI(currenAccount);
+// containerApp.style.opacity = 100;
 
 // Hesap giriş eventi
 btnLogin.addEventListener('click', function (e) {
@@ -265,6 +293,10 @@ btnLogin.addEventListener('click', function (e) {
     // Ansayfadaki kullanıcı adı bilgilerini gizliyoruz.
     const hideUnames = document.querySelector('.uname');
     hideUnames.style.display = 'none';
+
+    // giriş yapınca zaman sayacı çalıştıracak fonksiyon
+    if (timer) clearInterval(timer);
+    timer = startLogOutTimer();
 
     // update ui fonksiyonunu giriş yapan hesap bilgisi gönderiliyor
     updateUI(currenAccount);
@@ -312,6 +344,10 @@ btnTransfer.addEventListener('click', function (e) {
 
     // İşlemin arayüzde görünür olmasını sağlayan fonksiyonu çalıştırıyoruz.
     updateUI(currenAccount);
+
+    // Transfer işlemi yaparsak zaman sayacını yeniden başlatıyoruz
+    clearInterval(timer); // sayacı durdur
+    timer = startLogOutTimer(); // sayacı yeniden başlat
   }
 });
 
@@ -323,14 +359,20 @@ btnLoan.addEventListener('click', function (e) {
   // İlgili koşulları tanımlıyoruz.
   // some metoduyla talep edilen miktar, mevcut hesaptaki en büyük miktarın maksimum 10 katı kadar olabilir
   if (amount > 0 && currenAccount.movements.some(mov => mov >= amount / 10)) {
-    // Add movement
-    currenAccount.movements.push(amount);
+    setTimeout(function () {
+      // Add movement
+      currenAccount.movements.push(amount);
 
-    // Kredi talebi tarihini getiriyoruz.
-    currenAccount.movementsDates.push(new Date().toISOString());
+      // Kredi talebi tarihini getiriyoruz.
+      currenAccount.movementsDates.push(new Date().toISOString());
 
-    // update UI
-    updateUI(currenAccount);
+      // update UI
+      updateUI(currenAccount);
+
+      // Loan işlemi yaparsak zaman sayacını yeniden başlatıyoruz
+      clearInterval(timer);
+      timer = startLogOutTimer();
+    }, 2500);
   } else {
     alert(
       'bu miktar için hesabınız müsait değil. lütfen daha küçük bir miktar deneyin'
