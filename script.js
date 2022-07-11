@@ -250,9 +250,7 @@ const startLogOutTimer = function () {
 // Giriş yapan hesap ve zaman sayacı değişkeni
 let currenAccount, timer;
 
-// currenAccount = account1;
-// updateUI(currenAccount);
-// containerApp.style.opacity = 100;
+containerApp.style.display = 'none';
 
 // Hesap giriş eventi
 btnLogin.addEventListener('click', function (e) {
@@ -269,6 +267,7 @@ btnLogin.addEventListener('click', function (e) {
     }`;
     // Arayüz opasitesi değiştirilerek görünür oluyor
     containerApp.style.opacity = 100;
+    containerApp.style.display = 'grid';
 
     // Bugünün tarihini ekrana yazdırıyoruz
     const now = new Date();
